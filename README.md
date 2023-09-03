@@ -16,17 +16,80 @@ Com o avanço da aprendizagem de máquina, novas técnicas, como Boosting, Rando
 
 Nesta etapa, o problema é apresentado e contextualizado. É destacada a importância dos cartões de pontuação de crédito na indústria financeira e como esses modelos são tradicionalmente construídos com base em dados históricos.
 
+
 ### Etapa 2 - Entendimento dos Dados (CRISP-DM)
 
 Um dicionário de dados é fornecido para explicar o significado de cada variável presente no conjunto de dados. Além disso, são realizadas análises univariadas e bivariadas para entender a distribuição das variáveis e suas relações com a variável resposta.
+
+### Dicionário de Dados
+
+| Variável          | Descrição                                         | Tipo     |
+|-------------------|---------------------------------------------------|----------|
+| sexo              | M = 'Masculino'; F = 'Feminino'                  | M/F      |
+| posse_de_veiculo  | Y = 'possui'; N = 'não possui'                  | Y/N      |
+| posse_de_imovel   | Y = 'possui'; N = 'não possui'                  | Y/N      |
+| qtd_filhos        | Quantidade de filhos                             | inteiro  |
+| tipo_renda        | Tipo de renda (ex: assalariado, autônomo etc)    | texto    |
+| educacao          | Nível de educação (ex: secundário, superior etc)  | texto    |
+| estado_civil      | Estado civil (ex: solteiro, casado etc)           | texto    |
+| tipo_residencia   | Tipo de residência (ex: casa/apartamento, com os pais etc) | texto    |
+| idade             | Idade em anos                                    | inteiro  |
+| tempo de emprego  | Tempo de emprego em anos                         | inteiro  |
+| possui_celular    | Indica se possui celular (1 = sim, 0 = não)       | binária  |
+| possui_fone_comercial | Indica se possui telefone comercial (1 = sim, 0 = não) | binária  |
+| possui_fone       | Indica se possui telefone (1 = sim, 0 = não)       | binária  |
+| possui_email      | Indica se possui e-mail (1 = sim, 0 = não)         | binária  |
+| qt_pessoas_residencia | Quantidade de pessoas na residência         | inteiro  |
+| mau               | Indicadora de mau pagador (True = mau, False = bom) | binária  |
+
+
 
 ### Etapa 3 - Preparação dos Dados (CRISP-DM)
 
 Nesta etapa, são realizadas operações de limpeza e pré-processamento nos dados, incluindo a conversão de variáveis categóricas em variáveis dummy. A preparação dos dados é fundamental para garantir que o modelo de aprendizado de máquina seja treinado com dados adequados.
 
+#### Conversão de variáveis categóricas em dummies
+```python
+metadata = pd.DataFrame(df.dtypes, columns=['tipo'])
+metadata['n_categorias'] = 0
+
+for var in metadata.index:
+    metadata.loc[var, 'n_categorias'] = len(df.groupby([var]).size())
+
+def convert_dummy(df, feature, rank=0):
+    pos = pd.get_dummies(df[feature], prefix=feature)
+    mode = df[feature].value_counts().index[rank]
+    biggest = feature + '_' + str(mode)
+    pos.drop([biggest], axis=1, inplace=True)
+    df.drop([feature], axis=1, inplace=True)
+    df = df.join(pos)
+    return df
+
+for var in metadata[metadata['tipo'] == 'object'].index:
+    df = convert_dummy(df, var)
+```
+
 ### Etapa 4 - Modelagem (CRISP-DM)
 
 Aqui, o modelo de aprendizado de máquina é construído usando a técnica de floresta aleatória. O conjunto de dados é dividido em treinamento e teste, e o modelo é treinado e avaliado com base na acurácia.
+
+#### Treinando o modelo de Random Forest
+
+```python
+# Treinar uma Random Forest com 3 árvores
+clf = RandomForestClassifier(n_estimators=3)
+clf.fit(x_train, y_train)
+
+# Calculando a acurácia
+y_pred = clf.predict(x_test)
+acc = metrics.accuracy_score(y_test, y_pred)
+print('Acurácia: {0:.2f}%'.format(acc * 100))
+
+# Matriz de confusão
+tab = pd.crosstab(index=y_pred, columns=y_test)
+print(tab.iloc[1][0] / (tab.iloc[1][0] + tab.iloc[0][0]))
+print(tab.iloc[1][1] / (tab.iloc[1][1] + tab.iloc[0][1]))
+```
 
 ### Etapa 5 - Avaliação dos Resultados (CRISP-DM)
 
